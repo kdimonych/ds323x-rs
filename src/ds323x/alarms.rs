@@ -1,9 +1,18 @@
 //! Alarm support
+//!
+maybe_async_cfg::content! {
+#![maybe_async_cfg::default(
+    idents(ReadData, WriteData, Ds323x),
+)]
 
 use super::{decimal_to_packed_bcd, hours_to_register};
+#[maybe_async_cfg::maybe(
+    sync(not(feature = "async")),
+    async(feature = "async")
+)]
 use crate::{
-    ds323x::{NaiveTime, Timelike},
     interface::{ReadData, WriteData},
+    ds323x::{NaiveTime, Timelike},
     BitFlags, Ds323x, Error, Hours, Register,
 };
 
@@ -156,6 +165,10 @@ fn amend_hour(hours: Hours) -> Hours {
     }
 }
 
+#[maybe_async_cfg::maybe(
+    sync(not(feature = "async")),
+    async(feature = "async")
+)]
 impl<DI, IC, E> Ds323x<DI, IC>
 where
     DI: ReadData<Error = Error<E>> + WriteData<Error = Error<E>>,
@@ -167,7 +180,7 @@ where
     /// parameter is set to the corresponding minimum valid value:
     /// - Second, minute, hour: 0
     /// - Day: 1
-    pub fn set_alarm1_day(
+    pub async fn set_alarm1_day(
         &mut self,
         when: DayAlarm1,
         matching: Alarm1Matching,
@@ -199,21 +212,21 @@ where
             hours_to_register(hour)? | match_mask[2],
             decimal_to_packed_bcd(day) | match_mask[3],
         ];
-        self.iface.write_data(&mut data)
+        self.iface.write_data(&mut data).await
     }
 
     /// Set Alarm1 for a time (fires when hours, minutes and seconds match).
     ///
     /// Will return an `Error::InvalidInputData` if any of the parameters is out of range.
     /// The day is not used by this matching strategy and is set to 1.
-    pub fn set_alarm1_hms(&mut self, when: NaiveTime) -> Result<(), Error<E>> {
+    pub async fn set_alarm1_hms(&mut self, when: NaiveTime) -> Result<(), Error<E>> {
         let alarm = DayAlarm1 {
             day: 1,
             hour: Hours::H24(when.hour() as u8),
             minute: when.minute() as u8,
             second: when.second() as u8,
         };
-        self.set_alarm1_day(alarm, Alarm1Matching::HoursMinutesAndSecondsMatch)
+        self.set_alarm1_day(alarm, Alarm1Matching::HoursMinutesAndSecondsMatch).await
     }
 
     /// Set Alarm1 for weekday.
@@ -223,7 +236,7 @@ where
     /// parameter is set to the corresponding minimum valid value:
     /// - Second, minute, hour: 0
     /// - Weekday: 1
-    pub fn set_alarm1_weekday(
+    pub async fn set_alarm1_weekday(
         &mut self,
         when: WeekdayAlarm1,
         matching: Alarm1Matching,
@@ -255,7 +268,7 @@ where
             hours_to_register(hour)? | match_mask[2],
             decimal_to_packed_bcd(weekday) | match_mask[3] | BitFlags::WEEKDAY,
         ];
-        self.iface.write_data(&mut data)
+        self.iface.write_data(&mut data).await
     }
 
     /// Set Alarm2 for date (day of month).
@@ -265,7 +278,7 @@ where
     /// parameter is set to the corresponding minimum valid value:
     /// - Minute, hour: 0
     /// - Day: 1
-    pub fn set_alarm2_day(
+    pub async fn set_alarm2_day(
         &mut self,
         when: DayAlarm2,
         matching: Alarm2Matching,
@@ -292,20 +305,20 @@ where
             hours_to_register(hour)? | match_mask[1],
             decimal_to_packed_bcd(day) | match_mask[2],
         ];
-        self.iface.write_data(&mut data)
+        self.iface.write_data(&mut data).await
     }
 
     /// Set Alarm2 for a time (fires when hours and minutes match).
     ///
     /// Will return an `Error::InvalidInputData` if any of the parameters is out of range.
     /// The day is not used by this matching strategy and is set to 1.
-    pub fn set_alarm2_hm(&mut self, when: NaiveTime) -> Result<(), Error<E>> {
+    pub async fn set_alarm2_hm(&mut self, when: NaiveTime) -> Result<(), Error<E>> {
         let alarm = DayAlarm2 {
             day: 1,
             hour: Hours::H24(when.hour() as u8),
             minute: when.minute() as u8,
         };
-        self.set_alarm2_day(alarm, Alarm2Matching::HoursAndMinutesMatch)
+        self.set_alarm2_day(alarm, Alarm2Matching::HoursAndMinutesMatch).await
     }
 
     /// Set Alarm2 for weekday.
@@ -315,7 +328,7 @@ where
     /// parameter is set to the corresponding minimum valid value:
     /// - Minute, hour: 0
     /// - Weekday: 1
-    pub fn set_alarm2_weekday(
+    pub async fn set_alarm2_weekday(
         &mut self,
         when: WeekdayAlarm2,
         matching: Alarm2Matching,
@@ -341,6 +354,7 @@ where
             hours_to_register(hour)? | match_mask[1],
             decimal_to_packed_bcd(weekday) | match_mask[2] | BitFlags::WEEKDAY,
         ];
-        self.iface.write_data(&mut data)
+        self.iface.write_data(&mut data).await
     }
+}
 }
