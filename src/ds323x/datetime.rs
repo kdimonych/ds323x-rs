@@ -1,23 +1,44 @@
 //! Common implementation
-
+maybe_async_cfg::content! {
+#![maybe_async_cfg::default(
+    idents(ReadData, WriteData, Ds323x),
+)]
 use super::{
     decimal_to_packed_bcd, hours_to_register, packed_bcd_to_decimal, some_or_invalid_error,
 };
+
+#[maybe_async_cfg::maybe(
+    sync(not(feature = "async")),
+    async(feature = "async")
+)]
 use crate::{
     interface::{ReadData, WriteData},
-    BitFlags, DateTimeAccess, Datelike, Ds323x, Error, Hours, NaiveDate, NaiveDateTime, NaiveTime,
-    Register, Rtcc, Timelike,
+    BitFlags, Datelike, Ds323x, Error, Hours, NaiveDate, NaiveDateTime, NaiveTime,
+    Register, Timelike,
 };
 
+#[cfg(not(feature = "async"))]
+use rtcc::Rtcc;
+#[cfg(not(feature = "async"))]
+use crate::DateTimeAccess;
+#[cfg(feature = "async")]
+use super::rtcc_async::Rtcc;
+#[cfg(feature = "async")]
+use crate::DateTimeAccess;
+
+#[maybe_async_cfg::maybe(
+    sync(not(feature = "async")),
+    async(feature = "async")
+)]
 impl<DI, IC, E> DateTimeAccess for Ds323x<DI, IC>
 where
     DI: ReadData<Error = Error<E>> + WriteData<Error = Error<E>>,
 {
     type Error = Error<E>;
 
-    fn datetime(&mut self) -> Result<NaiveDateTime, Self::Error> {
+     async fn datetime(&mut self) -> Result<NaiveDateTime, Self::Error> {
         let mut data = [0; 8];
-        self.iface.read_data(&mut data)?;
+        self.iface.read_data(&mut data).await;
 
         let year = year_from_registers(
             data[Register::MONTH as usize + 1],
@@ -35,7 +56,7 @@ where
         some_or_invalid_error(datetime)
     }
 
-    fn set_datetime(&mut self, datetime: &NaiveDateTime) -> Result<(), Self::Error> {
+    async fn set_datetime(&mut self, datetime: &NaiveDateTime) -> Result<(), Self::Error> {
         if datetime.year() < 2000 || datetime.year() > 2100 {
             return Err(Error::InvalidInputData);
         }
@@ -50,30 +71,34 @@ where
             month,
             year,
         ];
-        self.iface.write_data(&mut payload)
+        self.iface.write_data(&mut payload).await
     }
 }
 
+#[maybe_async_cfg::maybe(
+    sync(not(feature = "async")),
+    async(feature = "async")
+)]
 impl<DI, IC, E> Rtcc for Ds323x<DI, IC>
 where
     DI: ReadData<Error = Error<E>> + WriteData<Error = Error<E>>,
 {
-    fn seconds(&mut self) -> Result<u8, Self::Error> {
-        self.read_register_decimal(Register::SECONDS)
+    async fn seconds(&mut self) -> Result<u8, Self::Error> {
+        self.read_register_decimal(Register::SECONDS).await
     }
 
-    fn minutes(&mut self) -> Result<u8, Self::Error> {
-        self.read_register_decimal(Register::MINUTES)
+    async fn minutes(&mut self) -> Result<u8, Self::Error> {
+        self.read_register_decimal(Register::MINUTES).await
     }
 
-    fn hours(&mut self) -> Result<Hours, Self::Error> {
-        let data = self.iface.read_register(Register::HOURS)?;
+    async fn hours(&mut self) -> Result<Hours, Self::Error> {
+        let data = self.iface.read_register(Register::HOURS).await?;
         Ok(hours_from_register(data))
     }
 
-    fn time(&mut self) -> Result<NaiveTime, Self::Error> {
+    async fn time(&mut self) -> Result<NaiveTime, Self::Error> {
         let mut data = [0; 4];
-        self.iface.read_data(&mut data)?;
+        self.iface.read_data(&mut data).await?;
         let hour = hours_from_register(data[Register::HOURS as usize + 1]);
         let minute = packed_bcd_to_decimal(data[Register::MINUTES as usize + 1]);
         let second = packed_bcd_to_decimal(data[Register::SECONDS as usize + 1]);
@@ -82,31 +107,31 @@ where
         some_or_invalid_error(time)
     }
 
-    fn weekday(&mut self) -> Result<u8, Self::Error> {
-        self.read_register_decimal(Register::DOW)
+    async fn weekday(&mut self) -> Result<u8, Self::Error> {
+        self.read_register_decimal(Register::DOW).await
     }
 
-    fn day(&mut self) -> Result<u8, Self::Error> {
-        self.read_register_decimal(Register::DOM)
+    async fn day(&mut self) -> Result<u8, Self::Error> {
+        self.read_register_decimal(Register::DOM).await
     }
 
-    fn month(&mut self) -> Result<u8, Self::Error> {
-        let data = self.iface.read_register(Register::MONTH)?;
+    async fn month(&mut self) -> Result<u8, Self::Error> {
+        let data = self.iface.read_register(Register::MONTH).await?;
         let value = data & !BitFlags::CENTURY;
         Ok(packed_bcd_to_decimal(value))
     }
 
-    fn year(&mut self) -> Result<u16, Self::Error> {
+    async fn year(&mut self) -> Result<u16, Self::Error> {
         let mut data = [0; 3];
         data[0] = Register::MONTH;
-        self.iface.read_data(&mut data)?;
+        self.iface.read_data(&mut data).await?;
         Ok(year_from_registers(data[1], data[2]))
     }
 
-    fn date(&mut self) -> Result<NaiveDate, Self::Error> {
+    async fn date(&mut self) -> Result<NaiveDate, Self::Error> {
         let mut data = [0; 4];
         data[0] = Register::DOM;
-        self.iface.read_data(&mut data)?;
+        self.iface.read_data(&mut data).await?;
 
         let offset = Register::DOM as usize;
         let year = year_from_registers(
@@ -120,64 +145,65 @@ where
         some_or_invalid_error(date)
     }
 
-    fn set_seconds(&mut self, seconds: u8) -> Result<(), Self::Error> {
+    async fn set_seconds(&mut self, seconds: u8) -> Result<(), Self::Error> {
         if seconds > 59 {
             return Err(Error::InvalidInputData);
         }
-        self.write_register_decimal(Register::SECONDS, seconds)
+        self.write_register_decimal(Register::SECONDS, seconds).await
     }
 
-    fn set_minutes(&mut self, minutes: u8) -> Result<(), Self::Error> {
+    async fn set_minutes(&mut self, minutes: u8) -> Result<(), Self::Error> {
         if minutes > 59 {
             return Err(Error::InvalidInputData);
         }
-        self.write_register_decimal(Register::MINUTES, minutes)
+        self.write_register_decimal(Register::MINUTES, minutes).await
     }
 
-    fn set_hours(&mut self, hours: Hours) -> Result<(), Self::Error> {
+    async fn set_hours(&mut self, hours: Hours) -> Result<(), Self::Error> {
         let value = hours_to_register(hours)?;
-        self.iface.write_register(Register::HOURS, value)
+        self.iface.write_register(Register::HOURS, value).await
     }
 
-    fn set_time(&mut self, time: &NaiveTime) -> Result<(), Self::Error> {
+    async fn set_time(&mut self, time: &NaiveTime) -> Result<(), Self::Error> {
         let mut payload = [
             Register::SECONDS,
             decimal_to_packed_bcd(time.second() as u8),
             decimal_to_packed_bcd(time.minute() as u8),
             hours_to_register(Hours::H24(time.hour() as u8))?,
         ];
-        self.iface.write_data(&mut payload)
+        self.iface.write_data(&mut payload).await
     }
 
-    fn set_weekday(&mut self, weekday: u8) -> Result<(), Self::Error> {
+    async fn set_weekday(&mut self, weekday: u8) -> Result<(), Self::Error> {
         if !(1..=7).contains(&weekday) {
             return Err(Error::InvalidInputData);
         }
-        self.iface.write_register(Register::DOW, weekday)
+        self.iface.write_register(Register::DOW, weekday).await
     }
 
-    fn set_day(&mut self, day: u8) -> Result<(), Self::Error> {
+    async fn set_day(&mut self, day: u8) -> Result<(), Self::Error> {
         if !(1..=31).contains(&day) {
             return Err(Error::InvalidInputData);
         }
-        self.write_register_decimal(Register::DOM, day)
+        self.write_register_decimal(Register::DOM, day).await
     }
 
-    fn set_month(&mut self, month: u8) -> Result<(), Self::Error> {
+    async fn set_month(&mut self, month: u8) -> Result<(), Self::Error> {
         if !(1..=12).contains(&month) {
             return Err(Error::InvalidInputData);
         }
         // keep the century bit
-        let data = self.iface.read_register(Register::MONTH)?;
+        let data = self.iface.read_register(Register::MONTH).await?;
         let value = (data & BitFlags::CENTURY) | decimal_to_packed_bcd(month);
-        self.iface.write_register(Register::MONTH, value)
+        self.iface.write_register(Register::MONTH, value).await
     }
 
-    fn set_year(&mut self, year: u16) -> Result<(), Self::Error> {
+    async fn set_year(&mut self, year: u16) -> Result<(), Self::Error> {
         if !(2000..=2100).contains(&year) {
             return Err(Error::InvalidInputData);
         }
-        let data = self.iface.read_register(Register::MONTH)?;
+        // TODO: Maybe transaction mode
+        let data = self.iface.read_register(Register::MONTH).await?;
         let month_bcd = data & !BitFlags::CENTURY;
         if year > 2099 {
             let mut data = [
@@ -185,18 +211,18 @@ where
                 BitFlags::CENTURY | month_bcd,
                 decimal_to_packed_bcd((year - 2100) as u8),
             ];
-            self.iface.write_data(&mut data)
+            self.iface.write_data(&mut data).await
         } else {
             let mut data = [
                 Register::MONTH,
                 month_bcd,
                 decimal_to_packed_bcd((year - 2000) as u8),
             ];
-            self.iface.write_data(&mut data)
+            self.iface.write_data(&mut data).await
         }
     }
 
-    fn set_date(&mut self, date: &rtcc::NaiveDate) -> Result<(), Self::Error> {
+    async fn set_date(&mut self, date: &rtcc::NaiveDate) -> Result<(), Self::Error> {
         if date.year() < 2000 || date.year() > 2100 {
             return Err(Error::InvalidInputData);
         }
@@ -208,22 +234,27 @@ where
             month,
             year,
         ];
-        self.iface.write_data(&mut payload)
+        self.iface.write_data(&mut payload).await
     }
 }
 
+#[maybe_async_cfg::maybe(
+    sync(not(feature = "async")),
+    async(feature = "async")
+)]
 impl<DI, IC, E> Ds323x<DI, IC>
 where
     DI: ReadData<Error = Error<E>> + WriteData<Error = Error<E>>,
 {
-    fn read_register_decimal(&mut self, register: u8) -> Result<u8, Error<E>> {
-        let data = self.iface.read_register(register)?;
+    async fn read_register_decimal(&mut self, register: u8) -> Result<u8, Error<E>> {
+        let data = self.iface.read_register(register).await?;
         Ok(packed_bcd_to_decimal(data))
     }
 
-    fn write_register_decimal(&mut self, register: u8, decimal_number: u8) -> Result<(), Error<E>> {
+    async fn write_register_decimal(&mut self, register: u8, decimal_number: u8) -> Result<(), Error<E>> {
         self.iface
             .write_register(register, decimal_to_packed_bcd(decimal_number))
+            .await
     }
 }
 
@@ -297,4 +328,5 @@ mod tests {
         assert_eq!(12, get_h24(Hours::AM(12)));
         assert_eq!(23, get_h24(Hours::PM(11)));
     }
+}
 }

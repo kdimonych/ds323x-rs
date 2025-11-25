@@ -2,6 +2,7 @@
 //! extremely accurate real-time clocks, based on the [`embedded-hal`] traits.
 //!
 //! [`embedded-hal`]: https://github.com/rust-embedded/embedded-hal
+
 //!
 //! This driver allows you to:
 //! - Read and set date and time in 12-hour and 24-hour format. See: [`datetime`].
@@ -365,7 +366,16 @@
 #![no_std]
 
 use core::marker::PhantomData;
+#[cfg(not(feature = "async"))]
 use embedded_hal::spi::{Mode, MODE_1, MODE_3};
+#[cfg(feature = "async")]
+use embedded_hal_async::spi::{Mode, MODE_1, MODE_3};
+
+#[cfg(feature = "async")]
+pub use crate::ds323x::rtcc_async::{
+    DateTimeAccess, Datelike, Hours, NaiveDate, NaiveDateTime, NaiveTime, Rtcc, Timelike,
+};
+#[cfg(not(feature = "async"))]
 pub use rtcc::{
     DateTimeAccess, Datelike, Hours, NaiveDate, NaiveDateTime, NaiveTime, Rtcc, Timelike,
 };
@@ -480,6 +490,7 @@ pub mod ic {
 }
 
 /// DS3231, DS3232 and DS3234 RTC driver
+#[maybe_async_cfg::maybe(sync(not(feature = "async")), async(feature = "async"))]
 #[derive(Debug, Default)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct Ds323x<DI, IC> {
@@ -502,7 +513,9 @@ mod private {
     use super::{ic, interface};
     pub trait Sealed {}
 
+    #[maybe_async_cfg::maybe(sync(not(feature = "async")), async(feature = "async"))]
     impl<SPI> Sealed for interface::SpiInterface<SPI> {}
+    #[maybe_async_cfg::maybe(sync(not(feature = "async")), async(feature = "async"))]
     impl<I2C> Sealed for interface::I2cInterface<I2C> {}
 
     impl Sealed for ic::DS3231 {}

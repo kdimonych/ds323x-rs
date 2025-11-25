@@ -1,11 +1,27 @@
 //! Functions exclusive of DS3232
+maybe_async_cfg::content! {
+#![maybe_async_cfg::default(
+    idents(I2cInterface, Ds323x),
+)]
 
+#[maybe_async_cfg::maybe(
+    sync(not(feature = "async")),
+    async(feature = "async")
+)]
 use crate::{
-    ic, interface::I2cInterface, BitFlags, Ds323x, Error, TempConvRate, CONTROL_POR_VALUE,
+    ic,BitFlags,interface::I2cInterface, Ds323x, Error, TempConvRate, CONTROL_POR_VALUE,
 };
 use core::marker::PhantomData;
-use embedded_hal::i2c;
 
+#[cfg(not(feature = "async"))]
+use embedded_hal::i2c;
+#[cfg(feature = "async")]
+use embedded_hal_async::i2c;
+
+#[maybe_async_cfg::maybe(
+    sync(not(feature = "async")),
+    async(feature = "async")
+)]
 impl<I2C, E> Ds323x<I2cInterface<I2C>, ic::DS3232>
 where
     I2C: i2c::I2c<Error = E>,
@@ -32,9 +48,9 @@ where
     /// [`enable_32khz_output()`](#method.enable_32khz_output).
     ///
     /// Note: This is only available for DS3232 and DS3234 devices.
-    pub fn enable_32khz_output_on_battery(&mut self) -> Result<(), Error<E>> {
+    pub async fn enable_32khz_output_on_battery(&mut self) -> Result<(), Error<E>> {
         let status = self.status | BitFlags::BB32KHZ;
-        self.write_status_without_clearing_alarm(status)
+        self.write_status_without_clearing_alarm(status).await
     }
 
     /// Disable the 32kHz output when battery-powered.
@@ -43,9 +59,9 @@ where
     /// it enabled. See [`enable_32khz_output()`](#method.enable_32khz_output).
     ///
     /// Note: This is only available for DS3232 and DS3234 devices.
-    pub fn disable_32khz_output_on_battery(&mut self) -> Result<(), Error<E>> {
+    pub async fn disable_32khz_output_on_battery(&mut self) -> Result<(), Error<E>> {
         let status = self.status & !BitFlags::BB32KHZ;
-        self.write_status_without_clearing_alarm(status)
+        self.write_status_without_clearing_alarm(status).await
     }
 
     /// Set the temperature conversion rate.
@@ -55,13 +71,14 @@ where
     /// temperature changes will not be compensated for.
     ///
     /// Note: This is only available for DS3232 and DS3234 devices.
-    pub fn set_temperature_conversion_rate(&mut self, rate: TempConvRate) -> Result<(), Error<E>> {
+    pub async fn set_temperature_conversion_rate(&mut self, rate: TempConvRate) -> Result<(), Error<E>> {
         let status = match rate {
             TempConvRate::_64s => self.status & !BitFlags::CRATE1 & !BitFlags::CRATE0,
             TempConvRate::_128s => self.status & !BitFlags::CRATE1 | BitFlags::CRATE0,
             TempConvRate::_256s => self.status | BitFlags::CRATE1 & !BitFlags::CRATE0,
             TempConvRate::_512s => self.status | BitFlags::CRATE1 | BitFlags::CRATE0,
         };
-        self.write_status_without_clearing_alarm(status)
+        self.write_status_without_clearing_alarm(status).await
     }
+}
 }

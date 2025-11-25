@@ -1,9 +1,26 @@
 //! Functions exclusive of DS3231
 
-use crate::{ic, interface::I2cInterface, BitFlags, Ds323x, CONTROL_POR_VALUE};
-use core::marker::PhantomData;
-use embedded_hal::i2c;
+maybe_async_cfg::content! {
+#![maybe_async_cfg::default(
+    idents(I2cInterface, Ds323x),
+)]
 
+#[maybe_async_cfg::maybe(
+    sync(not(feature = "async")),
+    async(feature = "async")
+)]
+use crate::{ic,interface::I2cInterface,  BitFlags, Ds323x, CONTROL_POR_VALUE};
+use core::marker::PhantomData;
+
+#[cfg(not(feature = "async"))]
+use embedded_hal::i2c;
+#[cfg(feature = "async")]
+use embedded_hal_async::i2c;
+
+#[maybe_async_cfg::maybe(
+    sync(not(feature = "async")),
+    async(feature = "async")
+)]
 impl<I2C, E> Ds323x<I2cInterface<I2C>, ic::DS3231>
 where
     I2C: i2c::I2c<Error = E>,
@@ -23,4 +40,5 @@ where
     pub fn destroy_ds3231(self) -> I2C {
         self.iface.i2c
     }
+}
 }
