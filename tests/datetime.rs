@@ -2,8 +2,8 @@ use embedded_hal_mock::eh1::{i2c::Transaction as I2cTrans, spi::Transaction as S
 use rtcc::NaiveDateTime;
 mod common;
 use self::common::{
-    destroy_ds3231, destroy_ds3232, destroy_ds3234, new_ds3231, new_ds3232, new_ds3234, Register,
-    DEVICE_ADDRESS as DEV_ADDR,
+    DEVICE_ADDRESS as DEV_ADDR, Register, destroy_ds3231, destroy_ds3232, destroy_ds3234,
+    new_ds3231, new_ds3232, new_ds3234,
 };
 #[allow(unused)] // Rust 1.31.0 is confused due to the macros
 use ds323x::Rtcc;

@@ -4,8 +4,8 @@ use embedded_hal_mock::eh1::{i2c::Transaction as I2cTrans, spi::Transaction as S
 #[allow(unused)]
 mod common;
 use self::common::{
-    destroy_ds3232, destroy_ds3234, new_ds3232, new_ds3234, BitFlags as BF, Register,
-    DEVICE_ADDRESS as DEV_ADDR, DS323X_POR_STATUS,
+    BitFlags as BF, DEVICE_ADDRESS as DEV_ADDR, DS323X_POR_STATUS, Register, destroy_ds3232,
+    destroy_ds3234, new_ds3232, new_ds3234,
 };
 
 macro_rules! call_method_status_test {

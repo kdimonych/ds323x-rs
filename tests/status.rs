@@ -1,8 +1,8 @@
 use embedded_hal_mock::eh1::{i2c::Transaction as I2cTrans, spi::Transaction as SpiTrans};
 mod common;
 use self::common::{
-    destroy_ds3231, destroy_ds3232, destroy_ds3234, new_ds3231, new_ds3232, new_ds3234,
-    BitFlags as BF, Register, DEVICE_ADDRESS as DEV_ADDR,
+    BitFlags as BF, DEVICE_ADDRESS as DEV_ADDR, Register, destroy_ds3231, destroy_ds3232,
+    destroy_ds3234, new_ds3231, new_ds3232, new_ds3234,
 };
 
 get_param_test!(running, running, CONTROL, true, 0);
