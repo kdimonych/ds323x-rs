@@ -38,7 +38,7 @@ where
 
      async fn datetime(&mut self) -> Result<NaiveDateTime, Self::Error> {
         let mut data = [0; 8];
-        self.iface.read_data(&mut data).await;
+        self.iface.read_data(&mut data).await?;
 
         let year = year_from_registers(
             data[Register::MONTH as usize + 1],
