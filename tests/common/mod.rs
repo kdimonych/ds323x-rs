@@ -1,4 +1,4 @@
-use ds323x::{ic, interface, Ds323x};
+use ds323x::{Ds323x, ic, interface};
 use embedded_hal_mock::eh1::{
     i2c::{Mock as I2cMock, Transaction as I2cTrans},
     spi::{Mock as SpiMock, Transaction as SpiTrans},
