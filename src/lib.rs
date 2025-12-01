@@ -367,9 +367,9 @@
 
 use core::marker::PhantomData;
 #[cfg(not(feature = "async"))]
-use embedded_hal::spi::{MODE_1, MODE_3, Mode};
+use embedded_hal::spi::{Mode, MODE_1, MODE_3};
 #[cfg(feature = "async")]
-use embedded_hal_async::spi::{MODE_1, MODE_3, Mode};
+use embedded_hal_async::spi::{Mode, MODE_1, MODE_3};
 
 #[cfg(feature = "async")]
 pub use crate::ds323x::rtcc_async::{

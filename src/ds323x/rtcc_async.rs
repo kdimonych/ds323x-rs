@@ -20,7 +20,6 @@
 //! The optional `defmt` feature implements [defmt::Format] on some types.
 
 #![deny(unsafe_code, missing_docs)]
-#![no_std]
 
 pub use chrono::{DateTime, Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 
