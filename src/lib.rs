@@ -363,6 +363,8 @@
 //! ```
 
 #![deny(unsafe_code, missing_docs)]
+//TODO: Get rid of async functions in interface traits. Return back this lib to its previous sync implementation.
+#![allow(async_fn_in_trait)]
 #![no_std]
 
 use core::marker::PhantomData;
