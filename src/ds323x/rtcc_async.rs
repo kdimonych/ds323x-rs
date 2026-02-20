@@ -21,7 +21,7 @@
 
 #![deny(unsafe_code, missing_docs)]
 
-pub use chrono::{DateTime, Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
+pub use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 
 /// Hours in either 12-hour (AM/PM) or 24-hour format
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
