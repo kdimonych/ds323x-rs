@@ -378,9 +378,7 @@ pub use crate::ds323x::rtcc_async::{
     DateTimeAccess, Datelike, Hours, NaiveDate, NaiveDateTime, NaiveTime, Rtcc, Timelike,
 };
 #[cfg(not(feature = "async"))]
-pub use rtcc::{
-    DateTimeAccess, Datelike, Hours, NaiveDate, NaiveDateTime, NaiveTime, Rtcc, Timelike,
-};
+pub use rtcc::{DateTimeAccess, Datelike, Hours, NaiveDate, NaiveDateTime, NaiveTime, Rtcc, Timelike};
 
 /// SPI mode 1 (CPOL = 0, CPHA = 1)
 pub const SPI_MODE_1: Mode = MODE_1;
@@ -504,9 +502,7 @@ pub struct Ds323x<DI, IC> {
 
 mod ds323x;
 pub mod interface;
-pub use crate::ds323x::{
-    Alarm1Matching, Alarm2Matching, DayAlarm1, DayAlarm2, WeekdayAlarm1, WeekdayAlarm2,
-};
+pub use crate::ds323x::{Alarm1Matching, Alarm2Matching, DayAlarm1, DayAlarm2, WeekdayAlarm1, WeekdayAlarm2};
 mod ds3231;
 mod ds3232;
 mod ds3234;

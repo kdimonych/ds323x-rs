@@ -2,8 +2,8 @@ use embedded_hal_mock::eh1::{i2c::Transaction as I2cTrans, spi::Transaction as S
 use rtcc::NaiveDateTime;
 mod common;
 use self::common::{
-    DEVICE_ADDRESS as DEV_ADDR, Register, destroy_ds3231, destroy_ds3232, destroy_ds3234,
-    new_ds3231, new_ds3232, new_ds3234,
+    DEVICE_ADDRESS as DEV_ADDR, Register, destroy_ds3231, destroy_ds3232, destroy_ds3234, new_ds3231, new_ds3232,
+    new_ds3234,
 };
 #[allow(unused)] // Rust 1.31.0 is confused due to the macros
 use ds323x::Rtcc;
@@ -27,11 +27,7 @@ macro_rules! read_set_param_write_two_test {
             $method,
             $value,
             [
-                I2cTrans::write_read(
-                    DEV_ADDR,
-                    vec![Register::$register],
-                    vec![$binary_value1_read]
-                ),
+                I2cTrans::write_read(DEV_ADDR, vec![Register::$register], vec![$binary_value1_read]),
                 I2cTrans::write(DEV_ADDR, vec![Register::$register, $bin1, $bin2])
             ],
             [
@@ -56,11 +52,7 @@ macro_rules! read_set_param_test {
             $method,
             $value,
             [
-                I2cTrans::write_read(
-                    DEV_ADDR,
-                    vec![Register::$register],
-                    vec![$binary_value_read]
-                ),
+                I2cTrans::write_read(DEV_ADDR, vec![Register::$register], vec![$binary_value_read]),
                 I2cTrans::write(DEV_ADDR, vec![Register::$register, $binary_value_write])
             ],
             [
@@ -207,15 +199,7 @@ mod year {
     );
 
     get_param_read_array_test!(century1_get, year, 2100, MONTH, [0b1000_0000, 0], [0, 0]);
-    read_set_param_write_two_test!(
-        century1_set,
-        set_year,
-        2100,
-        MONTH,
-        0b0001_0010,
-        0b1001_0010,
-        0
-    );
+    read_set_param_write_two_test!(century1_set, set_year, 2100, MONTH, 0b0001_0010, 0b1001_0010, 0);
 
     set_invalid_param_range_test!(invalid, set_year, 1999, 2101);
 }
