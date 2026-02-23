@@ -3,9 +3,8 @@ use embedded_hal_mock::eh1::{i2c::Transaction as I2cTrans, spi::Transaction as S
 
 mod common;
 use self::common::{
-    BitFlags as BF, CONTROL_POR_VALUE, DEVICE_ADDRESS as DEV_ADDR, DS323X_POR_STATUS,
-    DS3231_POR_STATUS, Register, destroy_ds3231, destroy_ds3232, destroy_ds3234, new_ds3231,
-    new_ds3232, new_ds3234,
+    BitFlags as BF, CONTROL_POR_VALUE, DEVICE_ADDRESS as DEV_ADDR, DS323X_POR_STATUS, DS3231_POR_STATUS, Register,
+    destroy_ds3231, destroy_ds3232, destroy_ds3234, new_ds3231, new_ds3232, new_ds3234,
 };
 
 macro_rules! call_triple_test {
@@ -64,20 +63,14 @@ macro_rules! call_method_status_test {
                 $method,
                 new_ds3231,
                 destroy_ds3231,
-                [I2cTrans::write(
-                    DEV_ADDR,
-                    vec![Register::STATUS, $value_ds3231]
-                )]
+                [I2cTrans::write(DEV_ADDR, vec![Register::STATUS, $value_ds3231])]
             );
             call_test!(
                 can_call_ds3232,
                 $method,
                 new_ds3232,
                 destroy_ds3232,
-                [I2cTrans::write(
-                    DEV_ADDR,
-                    vec![Register::STATUS, $value_ds323x]
-                )]
+                [I2cTrans::write(DEV_ADDR, vec![Register::STATUS, $value_ds323x])]
             );
             call_test!(
                 can_call_ds3234,
@@ -120,11 +113,7 @@ macro_rules! change_if_necessary_test {
                 change,
                 $method,
                 [
-                    I2cTrans::write_read(
-                        DEV_ADDR,
-                        vec![Register::$register],
-                        vec![$value_disabled]
-                    ),
+                    I2cTrans::write_read(DEV_ADDR, vec![Register::$register], vec![$value_disabled]),
                     I2cTrans::write(DEV_ADDR, vec![Register::$register, $value_enabled])
                 ],
                 [
@@ -213,28 +202,10 @@ call_method_test!(
     CONTROL_POR_VALUE & !BF::ALARM2_INT_EN
 );
 
-set_param_test!(
-    set_aging_offset_min,
-    set_aging_offset,
-    AGING_OFFSET,
-    -128,
-    0b1000_0000
-);
-set_param_test!(
-    set_aging_offset_max,
-    set_aging_offset,
-    AGING_OFFSET,
-    127,
-    127
-);
+set_param_test!(set_aging_offset_min, set_aging_offset, AGING_OFFSET, -128, 0b1000_0000);
+set_param_test!(set_aging_offset_max, set_aging_offset, AGING_OFFSET, 127, 127);
 
-get_param_test!(
-    get_aging_offset_min,
-    aging_offset,
-    AGING_OFFSET,
-    -128,
-    0b1000_0000
-);
+get_param_test!(get_aging_offset_min, aging_offset, AGING_OFFSET, -128, 0b1000_0000);
 get_param_test!(get_aging_offset_max, aging_offset, AGING_OFFSET, 127, 127);
 
 call_method_test!(
@@ -250,12 +221,7 @@ call_method_test!(
     CONTROL_POR_VALUE & !BF::INTCN
 );
 
-call_method_test!(
-    enable_sqw,
-    enable_square_wave,
-    CONTROL,
-    CONTROL_POR_VALUE | BF::BBSQW
-);
+call_method_test!(enable_sqw, enable_square_wave, CONTROL, CONTROL_POR_VALUE | BF::BBSQW);
 call_method_test!(
     disable_sqw,
     disable_square_wave,

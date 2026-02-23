@@ -1,8 +1,8 @@
 use embedded_hal_mock::eh1::{i2c::Transaction as I2cTrans, spi::Transaction as SpiTrans};
 mod common;
 use self::common::{
-    BitFlags as BF, DEVICE_ADDRESS as DEV_ADDR, Register, destroy_ds3231, destroy_ds3232,
-    destroy_ds3234, new_ds3231, new_ds3232, new_ds3234,
+    BitFlags as BF, DEVICE_ADDRESS as DEV_ADDR, Register, destroy_ds3231, destroy_ds3232, destroy_ds3234, new_ds3231,
+    new_ds3232, new_ds3234,
 };
 
 get_param_test!(running, running, CONTROL, true, 0);
@@ -15,32 +15,13 @@ get_param_test!(stopped, has_been_stopped, STATUS, true, 0xFF);
 get_param_test!(not_stopped, has_been_stopped, STATUS, false, !BF::OSC_STOP);
 
 get_param_test!(alarm1_matched, has_alarm1_matched, STATUS, true, 0xFF);
-get_param_test!(
-    alarm1_not_matched,
-    has_alarm1_matched,
-    STATUS,
-    false,
-    !BF::ALARM1F
-);
+get_param_test!(alarm1_not_matched, has_alarm1_matched, STATUS, false, !BF::ALARM1F);
 
 get_param_test!(alarm2_matched, has_alarm2_matched, STATUS, true, 0xFF);
-get_param_test!(
-    alarm2_not_matched,
-    has_alarm2_matched,
-    STATUS,
-    false,
-    !BF::ALARM2F
-);
+get_param_test!(alarm2_not_matched, has_alarm2_matched, STATUS, false, !BF::ALARM2F);
 
 get_param_read_array_test!(temp_0, temperature, 0.0, TEMP_MSB, [0, 0], [0, 0]);
-get_param_read_array_test!(
-    temp_min,
-    temperature,
-    -128.0,
-    TEMP_MSB,
-    [0b1000_0000, 0],
-    [0, 0]
-);
+get_param_read_array_test!(temp_min, temperature, -128.0, TEMP_MSB, [0b1000_0000, 0], [0, 0]);
 get_param_read_array_test!(
     temp_max,
     temperature,

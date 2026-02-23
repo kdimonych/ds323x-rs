@@ -4,9 +4,7 @@ mod configuration;
 pub mod rtcc_async;
 mod status;
 
-pub use self::alarms::{
-    Alarm1Matching, Alarm2Matching, DayAlarm1, DayAlarm2, WeekdayAlarm1, WeekdayAlarm2,
-};
+pub use self::alarms::{Alarm1Matching, Alarm2Matching, DayAlarm1, DayAlarm2, WeekdayAlarm1, WeekdayAlarm2};
 mod datetime;
 use crate::{BitFlags, Error, Hours, NaiveTime, Timelike};
 
